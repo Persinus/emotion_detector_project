@@ -1,5 +1,4 @@
 # emotion_detector_project
-# Emotion Detection API
 
 ## Mô tả dự án
 Dự án này sử dụng mô hình học sâu (CNN) để nhận diện cảm xúc từ ảnh. Mô hình được huấn luyện với bộ dữ liệu cảm xúc từ ảnh như FER2013. Dự án này gồm các bước từ xử lý dữ liệu, xây dựng và huấn luyện mô hình, tạo API Flask để nhận diện cảm xúc, và triển khai ứng dụng lên nền tảng cloud.
