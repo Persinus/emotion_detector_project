@@ -1,30 +1,31 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+// Không cần nội dung trong <script setup> nếu bạn chỉ cần render router-view và hiệu ứng logo
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div class="app-container">
+    <!-- Đảm bảo rằng logo được đặt trong một phần tử có class 'logo' -->
+    <img class="logo" src="./Front-End/src/assets/logo.png" alt="Logo" />
+    <!-- router-view sẽ hiển thị các thành phần tương ứng với route -->
+    <router-view></router-view>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
 <style scoped>
+/* Hiệu ứng hover trên logo */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
-.logo.vue:hover {
+
+/* Nếu bạn muốn sử dụng các hiệu ứng khác cho logo trong các thành phần khác nhau */
+.logo.some-other-class:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }
 </style>

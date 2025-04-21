@@ -1,5 +1,8 @@
 import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
 
-createApp(App).mount('#app')
+import App from './App.vue'
+import router from '../router' // Import đúng từ ./router
+
+const app = createApp(App)
+app.use(router)    // Kích hoạt Vue Router để quản lý các route trong ứng dụng
+app.mount('#app')
