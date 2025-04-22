@@ -1,67 +1,105 @@
-import numpy as np
-import cv2
 import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
 
-# Tải mô hình đã huấn luyện
-model = tf.keras.models.load_model('emotion_detection_model_gsn.h5')
+# Đường dẫn đến dữ liệu
+TRAIN_DIR = "./Dataset/Train"
+VALIDATION_DIR = "./Dataset/Test"
 
-# Bản đồ các cảm xúc
-emotion_dict = {
-    0: "Angry",
-    1: "Disgusted",
-    2: "Fearful",
-    3: "Happy",
-    4: "Neutral",
-    5: "Sad",
-    6: "Surprised"
-}
+# Thông số
+IMG_WIDTH, IMG_HEIGHT = 48, 48
+BATCH_SIZE = 32
+EPOCHS = 25
+NUM_CLASSES = 7  # Số nhãn trong FER-2013 (Angry, Disgust, Fear, Happy, Neutral, Sad, Surprise)
 
-# Đường dẫn đến ảnh cần dự đoán
-image_path = 'path/to/image.jpg'  # Thay thế bằng đường dẫn đến ảnh của bạn
+# Chuẩn bị dữ liệu
+train_datagen = ImageDataGenerator(
+    rescale=1.0 / 255.0,
+    rotation_range=30,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True
+)
 
-# Đọc ảnh
-image = cv2.imread(image_path)
+validation_datagen = ImageDataGenerator(rescale=1.0 / 255.0)
 
-if image is None:
-    print(f"Không thể đọc ảnh từ: {image_path}")
-else:
-    # Chuyển ảnh sang thang xám
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+train_generator = train_datagen.flow_from_directory(
+    TRAIN_DIR,
+    target_size=(IMG_WIDTH, IMG_HEIGHT),
+    batch_size=BATCH_SIZE,
+    color_mode="grayscale",
+    class_mode="categorical"
+)
 
-    # Phát hiện khuôn mặt sử dụng Haar Cascade
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+validation_generator = validation_datagen.flow_from_directory(
+    VALIDATION_DIR,
+    target_size=(IMG_WIDTH, IMG_HEIGHT),
+    batch_size=BATCH_SIZE,
+    color_mode="grayscale",
+    class_mode="categorical"
+)
 
-    if len(faces) == 0:
-        print("Không phát hiện được khuôn mặt trong ảnh.")
-    else:
-        for (x, y, w, h) in faces:
-            # Vẽ khung xung quanh khuôn mặt
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+# Xây dựng mô hình
+model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(IMG_WIDTH, IMG_HEIGHT, 1)),
+    MaxPooling2D(pool_size=(2, 2)),
+    Dropout(0.25),
 
-            # Trích xuất và resize khuôn mặt về 48x48
-            roi_gray = gray[y:y + h, x:x + w]
-            resized_face = cv2.resize(roi_gray, (48, 48))
-            cropped_img = np.expand_dims(np.expand_dims(resized_face, -1), 0)
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D(pool_size=(2, 2)),
+    Dropout(0.25),
 
-            # Dự đoán cảm xúc
-            prediction = model.predict(cropped_img)
-            maxindex = int(np.argmax(prediction))
-            emotion = emotion_dict[maxindex]
+    Conv2D(128, (3, 3), activation='relu'),
+    MaxPooling2D(pool_size=(2, 2)),
+    Dropout(0.25),
 
-            # Ghi tên cảm xúc lên ảnh
-            cv2.putText(
-                image,
-                emotion,
-                (x, y - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (255, 255, 255),
-                2,
-                cv2.LINE_AA
-            )
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dropout(0.5),
+    Dense(NUM_CLASSES, activation='softmax')
+])
 
-        # Hiển thị ảnh với cảm xúc
-        cv2.imshow("Emotion Detection", image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+# Biên dịch mô hình
+model.compile(
+    loss='categorical_crossentropy',
+    optimizer=Adam(learning_rate=0.001),
+    metrics=['accuracy']
+)
+
+# Huấn luyện mô hình
+history = model.fit(
+    train_generator,
+    steps_per_epoch=train_generator.samples // BATCH_SIZE,
+    epochs=EPOCHS,
+    validation_data=validation_generator,
+    validation_steps=validation_generator.samples // BATCH_SIZE
+)
+
+# Lưu mô hình
+model.save("emotion_detection_model.h5")
+print("Model saved as emotion_detection_model.h5")
+
+# Vẽ biểu đồ kết quả
+import matplotlib.pyplot as plt
+
+# Biểu đồ loss
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss during Training and Validation')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+# Biểu đồ accuracy
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Accuracy during Training and Validation')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()

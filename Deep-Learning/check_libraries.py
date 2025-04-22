@@ -1,6 +1,6 @@
 # check_libraries.py
 
-libraries = ['numpy', 'pandas', 'cv2', 'tensorflow', 'matplotlib', 'sklearn','kagglehub']  # Sử dụng 'sklearn' cho scikit-learn
+libraries = ['numpy', 'pandas', 'cv2', 'tensorflow', 'matplotlib', 'sklearn','kagglehub','PIL']  # Sử dụng 'sklearn' cho scikit-learn
 
 for lib in libraries:
     try:

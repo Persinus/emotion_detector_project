@@ -11,7 +11,13 @@ const routes = [
     path: '/test',
     name: 'Test',
     component: () => import('../src/views/Test.vue'),
+  },
+  {
+    path: '/testcam',
+    name: 'Testcamm',
+    component: () => import('../src/views/WebCam.vue'),
   }
+  
 ]
 
 const router = createRouter({
