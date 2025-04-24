@@ -24,22 +24,39 @@ Dự án này sử dụng mô hình học sâu (CNN) để nhận diện cảm x
 - Sử dụng Flask để xây dựng API, cho phép người dùng tải ảnh và nhận dự đoán cảm xúc.
 - Lưu mô hình đã huấn luyện và tải lại trong Flask API.
 
-### Bước 6: Tạo giao diện web
-- Tạo form HTML để người dùng tải ảnh lên.
-- Kết nối API với giao diện người dùng thông qua Fetch API.
+Bước 6: Tạo giao diện web
+Sử dụng Vue 3 để phát triển giao diện người dùng (frontend).
 
-### Bước 7: Triển khai
-- Sử dụng Docker để đóng gói ứng dụng và triển khai lên các nền tảng như Heroku, AWS, hoặc Google Cloud.
+Sử dụng Face API để phát hiện và cắt khuôn mặt từ ảnh trước khi gửi dữ liệu đến API Flask.
 
-## Cấu trúc thư mục
-emotion-detection-api/ ├── app.py # Flask API ├── model.py # Code mô hình CNN ├── requirements.txt # Danh sách các thư viện cần thiết ├── Dockerfile # Dockerfile cho triển khai ứng dụng ├── data/ # Dữ liệu huấn luyện (có thể tải về từ Kaggle) │ └── fer2013/ # Dữ liệu FER2013 ├── templates/ # Thư mục chứa các file HTML │ └── index.html # Giao diện web cho người dùng └── README.md # File README
+Kết nối API Flask với giao diện người dùng bằng Axios để gửi và nhận dữ liệu.
+
+Các bước cụ thể:
+Cài đặt Face API:
+
+Cài đặt thư viện face-api.js thông qua npm:
+
+npm install face-api.js
+Xử lý ảnh trên frontend:
+
+Dùng Face API để phát hiện khuôn mặt và cắt khuôn mặt từ ảnh.
+
+Gửi khuôn mặt đã được xử lý qua Axios đến API Flask.
+
+Xây dựng giao diện với Vue 3:
+
+Tạo một form cho phép người dùng tải ảnh lên.
+
+Hiển thị kết quả dự đoán cảm xúc sau khi API trả về.
+
+Kết nối với Flask API:
+
+Sử dụng Axios để gửi request đến API Flask:
+
 
 ## Cài đặt và Chạy Dự Án
 
 ### 1. Cài đặt yêu cầu
 Tạo môi trường ảo và cài đặt các thư viện cần thiết bằng pip:
 
-```bash
-python -m venv venv
-source venv/bin/activate  # Trên Windows: venv\Scripts\activate
-pip install -r requirements.txt
+
