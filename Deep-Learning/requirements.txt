@@ -7,3 +7,4 @@ opencv-python==4.11.0.86
 matplotlib==3.10.1
 scikit-learn==1.6.1
 pillow==11.2.1
+gunicorn==20.1.0
