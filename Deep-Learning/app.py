@@ -12,7 +12,8 @@ CORS(app)
 model = load_model('emotion_detection_model.h5')
 
 # Tạo một dictionary ánh xạ các nhãn của FER-2013
-emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+emotion_labels = ['Angry 😡', 'Disgust 🤢', 'Fear 😨', 'Happy 😄', 'Sad 😢', 'Surprise 😲', 'Neutral 😐']
+
 
 @app.route('/predict', methods=['POST'])
 def predict():

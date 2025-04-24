@@ -1,107 +1,267 @@
 <template>
-  <div>
+  <div class="app-container">
     <h1>Emotion Detection</h1>
 
-    <!-- Display the image before or after selecting -->
-    <div class="image-preview">
-      <img :src="imagePreview" alt="Image Preview" v-if="imagePreview" />
-      <p v-if="!selectedImage" class="no-image">No image selected yet</p>
-    </div>
+    <!-- Two-column layout -->
+    <div class="content-container">
+      <!-- Left Column: Upload Image -->
+      <div class="left-panel">
+        <h3>Upload Image</h3>
+        <div class="image-preview">
+          <img :src="imagePreview" alt="Original Image" v-if="imagePreview" />
+          <p v-if="!selectedImage" class="no-image">
+            No image selected yet. Please upload a close-up image of a face.
+          </p>
+        </div>
+        <input type="file" @change="onFileChange" class="file-input" />
+        <button
+          @click="makePrediction"
+          :disabled="!faceDetected || isLoading"
+          class="predict-button"
+        >
+          {{ isLoading ? "Processing..." : "Predict Emotion" }}
+        </button>
+        <div v-if="isDetecting" class="loading-indicator">
+          <p>Detecting face...</p>
+        </div>
+      </div>
 
-    <!-- Select file -->
-    <input type="file" @change="onFileChange" />
-
-    <!-- Prediction button -->
-    <button @click="makePrediction">Predict Emotion</button>
-
-    <!-- Display prediction or error -->
-    <p v-if="prediction" class="prediction-result">Prediction: {{ prediction }}</p>
-    <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-
-    <!-- Display image with face highlighted -->
-    <div v-if="imageWithFaces">
-      <img :src="imageWithFaces" alt="Image with Faces" />
+      <!-- Right Column: Results -->
+      <div class="right-panel">
+        <h3>Results</h3>
+        <div class="image-preview">
+          <canvas ref="resultCanvas" v-if="faceDetected"></canvas>
+        </div>
+        <div class="results">
+          <p v-if="prediction" class="prediction-result">
+            Trạng thái cảm xúc của ảnh là : {{ prediction }}
+          </p>
+          <p v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import * as faceapi from "face-api.js";
+import axios from "axios"; // Import axios
 
 export default {
   data() {
     return {
-      prediction: null,
-      selectedImage: null,
-      imagePreview: null,  // Holds the image preview URL
-      imageWithFaces: null, // Holds the image with faces highlighted
-      errorMessage: null,  // Holds the error message if any
+      selectedImage: null, // Selected file
+      imagePreview: null, // URL for preview
+      faceDetected: false, // Face detection status
+      errorMessage: null, // Error message to display
+      isLoading: false, // Loading state for prediction
+      isDetecting: false, // Loading state for face detection
+      prediction: null, // Prediction result
+      croppedFaceBlob: null, // Cropped face image blob
     };
   },
   methods: {
-    onFileChange(event) {
-      const file = event.target.files[0];  // Get the selected file
+    async onFileChange(event) {
+      const file = event.target.files[0];
       if (file) {
         this.selectedImage = file;
-        this.imagePreview = URL.createObjectURL(file);  // Create preview URL for the selected image
-        this.errorMessage = null;  // Clear any previous error message
+        this.imagePreview = URL.createObjectURL(file);
+        this.errorMessage = null;
+        this.faceDetected = false;
+
+        console.log("Image selected:", file.name);
+
+        // Run face detection
+        this.isDetecting = true;
+        await this.detectFace(file);
+        this.isDetecting = false;
+      }
+    },
+    async detectFace(file) {
+      try {
+        console.log("Loading face detection model...");
+        await faceapi.nets.ssdMobilenetv1.loadFromUri("/models");
+
+        console.log("Model loaded. Detecting face...");
+        const image = await faceapi.bufferToImage(file);
+        const detections = await faceapi.detectSingleFace(image);
+
+        if (detections) {
+          console.log("Face detected:", detections);
+          this.faceDetected = true;
+
+          // Wait for DOM updates before accessing canvas
+          await this.$nextTick();
+
+          // Access canvas
+          const canvas = this.$refs.resultCanvas;
+          if (!canvas) {
+            throw new Error("Canvas element not found.");
+          }
+
+          const context = canvas.getContext("2d");
+          const { x, y, width, height } = detections.box;
+
+          const img = new Image();
+          img.src = this.imagePreview;
+
+          // Draw the image and the face bounding box
+          await new Promise((resolve) => {
+            img.onload = () => {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              context.drawImage(img, 0, 0, img.width, img.height);
+
+              // Draw rectangle around detected face
+              context.strokeStyle = "red";
+              context.lineWidth = 2;
+              context.strokeRect(x, y, width, height);
+
+              // Crop the detected face and save it as a blob
+              const faceCanvas = document.createElement("canvas");
+              faceCanvas.width = width;
+              faceCanvas.height = height;
+              const faceContext = faceCanvas.getContext("2d");
+              faceContext.drawImage(img, x, y, width, height, 0, 0, width, height);
+              faceCanvas.toBlob((blob) => {
+                this.croppedFaceBlob = blob;
+                console.log("Cropped face blob created.");
+              });
+
+              resolve();
+            };
+          });
+        } else {
+          console.warn("No face detected in the image.");
+          this.errorMessage =
+            "No face detected in the image. Please upload a closer image.";
+          this.faceDetected = false;
+        }
+      } catch (error) {
+        console.error("Error detecting face:", error);
+        this.errorMessage = "Error detecting face: " + error.message;
+        this.faceDetected = false;
       }
     },
     async makePrediction() {
+      if (!this.faceDetected || !this.croppedFaceBlob) {
+        this.errorMessage = "Please upload an image with a detectable face to analyze!";
+        return;
+      }
+
       try {
-        if (!this.selectedImage) {
-          this.errorMessage = "Please select an image first!";
-          return;
-        }
+        this.isLoading = true;
+        this.errorMessage = null;
 
-        // Create FormData to send the image
+        console.log("Sending cropped face to backend for prediction...");
+
         const formData = new FormData();
-        formData.append('file', this.selectedImage);
+        formData.append("file", this.croppedFaceBlob, "cropped_face.jpg");
 
-        // Send the image to the Flask server
-        const response = await axios.post('http://127.0.0.1:5000/predict', formData, {
+        const response = await axios.post("http://127.0.0.1:5000/predict", formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'  // Ensure the content type is 'multipart/form-data'
-          }
+            "Content-Type": "multipart/form-data",
+          },
         });
 
-        this.prediction = response.data.prediction;
-        this.errorMessage = null;  // Clear error message if prediction is successful
-        this.imageWithFaces = `data:image/png;base64,${btoa(String.fromCharCode(...new Uint8Array(response.data.image)))}`;
+        if (response.data && response.data.prediction) {
+          console.log("Prediction received:", response.data);
+          this.prediction = response.data.prediction;
+        } else {
+          throw new Error("Prediction data is invalid.");
+        }
       } catch (error) {
-        this.errorMessage = "Error making prediction: " + error.message;
-        this.prediction = null;  // Clear prediction if error occurs
-        this.imageWithFaces = null; // Clear the image if error occurs
+        console.error("Error connecting to backend:", error);
+        this.errorMessage = "Cannot connect to backend. Please make sure it is running.";
+      } finally {
+        this.isLoading = false;
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
-/* Your CSS styles */
-.image-preview {
-  text-align: center;
+/* Overall app styling */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #333;
   margin-bottom: 20px;
 }
 
-.no-image {
-  color: red;
-  font-size: 18px;
-}
-
-.prediction-result {
-  color: green;
-}
-
-.error-message {
-  color: red;
-}
-
-img {
+/* Two-column layout */
+.content-container {
+  display: flex;
+  gap: 20px;
   width: 100%;
-  max-width: 400px;
-  display: block;
-  margin: 20px auto;
+}
+
+.left-panel,
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Image preview styling */
+.image-preview {
+  margin-bottom: 20px;
+  width: 100%;
+  text-align: center;
+}
+
+.image-preview img,
+canvas {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+}
+
+.no-image {
+  color: #ff6b6b;
+  font-size: 16px;
+  font-style: italic;
+}
+
+/* Predict button */
+.predict-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.predict-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Loading indicator */
+.loading-indicator {
+  margin-top: 10px;
+  color: #007bff;
+  font-size: 14px;
+  font-style: italic;
 }
 </style>
