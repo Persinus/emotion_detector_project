@@ -16,6 +16,12 @@ const routes = [
     path: '/CheckWebCam',
     name: 'Testcam',
     component: () => import('../src/views/CheckWebCam.vue'),
+  },
+  //
+  {
+    path: '/vanban',
+    name: 'VanBan',
+    component: () => import('../src/views/VanBan.vue'),
   }
   
 ]
