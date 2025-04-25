@@ -24,9 +24,7 @@
       <div class="project-info">
         <p>
           FER-2013 (Facial Expression Recognition 2013) là tập dữ liệu tiêu chuẩn được sử dụng trong các bài toán nhận diện cảm xúc.
-          Tập dữ liệu này bao gồm hơn 35.000 hình ảnh đen trắng kích thước 48x48 pixel được gán nhãn với các cảm xúc như Hạnh phúc, Buồn, Ngạc nhiên, Tức giận, và nhiều cảm xúc khác.
-        </p>
-        <p>
+          Tập dữ liệu này bao gồm hơn 35.000 hình ảnh đen trắng kích thước 48x48 pixel được gán nhãn với các cảm xúc như Hạnh phúc, Buồn, Ngạc nhiên, Tức giận, và nhiều cảm xúc khác.    
           Trong dự án này, chúng tôi áp dụng các kỹ thuật Deep Learning để phân tích và nhận diện cảm xúc từ hình ảnh dựa trên tập dữ liệu FER-2013.
         </p>
       </div>

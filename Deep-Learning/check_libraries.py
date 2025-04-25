@@ -10,7 +10,6 @@ libraries = {
     'scikit-learn': 'sklearn',
     'kaggle': 'kagglehub',
     'Pillow': 'PIL',
-   
     'h5py': 'h5py'
 }
 

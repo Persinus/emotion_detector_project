@@ -17,6 +17,9 @@
           <el-menu-item index="3">
             <router-link to="/CheckWebCam" class="nav-link">CheckWebCam</router-link>
           </el-menu-item>
+          <el-menu-item index="3">
+            <router-link to="/vanBan" class="nav-link">CheckText</router-link>
+          </el-menu-item>
         </el-menu>
       </nav>
     </header>
