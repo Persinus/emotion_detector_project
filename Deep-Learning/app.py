@@ -8,7 +8,11 @@ import io
 import base64
 
 app = Flask(__name__)
-CORS(app)
+
+# Cấu hình CORS cho phép yêu cầu từ localhost và từ domain đã deploy
+CORS(app, resources={r"/predict": {"origins": ["http://localhost:5173", "https://emotion-detector-project-chaos.onrender.com"]}})
+CORS(app, resources={r"/predict_frame": {"origins": ["http://localhost:5173", "https://emotion-detector-project-chaos.onrender.com"]}})
+CORS(app, resources={r"/status": {"origins": ["http://localhost:5173", "https://emotion-detector-project-chaos.onrender.com"]}})
 
 # Load the emotion detection model
 model = load_model('emotion_detection_model.h5')
@@ -52,9 +56,6 @@ def predict():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-# Emotion labels from FER-2013 dataset
-emotion_labels = ['Angry 😡', 'Disgust 🤢', 'Fear 😨', 'Happy 😄', 'Sad 😢', 'Surprise 😲', 'Neutral 😐']
 
 @app.route('/predict_frame', methods=['POST'])
 def predict_frame():
