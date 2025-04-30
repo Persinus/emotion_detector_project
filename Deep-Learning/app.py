@@ -9,8 +9,11 @@ import base64
 
 app = Flask(__name__)
 
-# Cấu hình CORS cho phép yêu cầu từ localhost và từ domain đã deploy
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={
+    r"/predict": {"origins": ["https://emotion-detector-project-chaos.vercel.app"]},
+    r"/predict_frame": {"origins": ["https://emotion-detector-project-chaos.vercel.app"]}
+}, supports_credentials=True, allow_headers=["Content-Type"])
+
 
 # Load the emotion detection model
 model = load_model('emotion_detection_model.h5')
