@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
@@ -10,8 +10,8 @@ import base64
 app = Flask(__name__)
 
 # Cấu hình CORS cho phép yêu cầu từ localhost và từ domain đã deploy
-CORS(app, resources={r"/predict": {"origins": "*"}})
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
 # Load the emotion detection model
 model = load_model('emotion_detection_model.h5')
 
@@ -20,12 +20,7 @@ emotion_labels = ['Angry 😡', 'Disgust 🤢', 'Fear 😨', 'Happy 😄', 'Sad 
 
 @app.route('/predict', methods=['POST'])
 def predict():
-     if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        return response
+  
     """Predict emotion from a static image file"""
     try:
         if 'file' not in request.files:
