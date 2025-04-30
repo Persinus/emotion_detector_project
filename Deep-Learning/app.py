@@ -13,7 +13,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/predict": {"origins": ["http://localhost:5173", "https://emotion-detector-project-chaos.onrender.com"]}})
 CORS(app, resources={r"/predict_frame": {"origins": ["http://localhost:5173", "https://emotion-detector-project-chaos.onrender.com"]}})
 CORS(app, resources={r"/status": {"origins": ["http://localhost:5173", "https://emotion-detector-project-chaos.onrender.com"]}})
-
+CORS(app)
 # Load the emotion detection model
 model = load_model('emotion_detection_model.h5')
 
