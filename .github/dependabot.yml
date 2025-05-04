@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Back-End: Flask (Python)
+  - package-ecosystem: "pip"
+    directory: "/Deep-Learning"
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "flask"  # Bỏ qua cập nhật Flask nếu muốn
+
+  # Front-End: Vue.js (npm hoặc yarn)
+  - package-ecosystem: "npm"
+    directory: "/Front-End"
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "face-api.js"  # Bỏ qua cập nhật face-api.js nếu cần
