@@ -1,19 +1,27 @@
 <template>
   <div class="container">
-    <div class="main">
-      <!-- Video -->
-      <video ref="videoRef" autoplay muted></video>
-      <!-- Canvas -->
-      <canvas ref="canvasRef"></canvas>
+    <!-- Loading Modal -->
+    <div v-if="loading" class="modal">
+      <div class="modal-content">🧠 Xin chờ... đang tải mô hình...</div>
     </div>
 
-    <!-- Loading message -->
-    <p v-if="loading" class="loading">Loading models...</p>
+    <!-- Ready Dialog -->
+    <div v-if="readyDialog" class="modal ready">
+      <div class="modal-content success">✅ Mô hình đã sẵn sàng! Bắt đầu quét</div>
+    </div>
 
-    <!-- Kết quả quét -->
-    <div class="results" v-if="!loading && emotion">
-      <h3>Kết quả quét:</h3>
-      <p class="emotion-result">Cảm xúc: {{ emotion }}</p>
+    <!-- Main Split Layout -->
+    <div class="main">
+      <div class="left-panel">
+        <video ref="videoRef" autoplay muted playsinline></video>
+        <canvas ref="canvasRef"></canvas>
+      </div>
+      <div class="right-panel">
+        <div v-if="emotion">
+          <h3>Kết quả quét</h3>
+          <p class="emotion-result">Cảm xúc: {{ emotion }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -26,43 +34,22 @@ export default {
   setup() {
     const videoRef = ref(null);
     const canvasRef = ref(null);
-    const isLoaded = ref(false);
     const loading = ref(true);
     const emotion = ref("");
+    const isLoaded = ref(false);
+    const readyDialog = ref(false);
 
-    // Hàm load models của face-api.js
     const loadModels = async () => {
       await faceapi.nets.ssdMobilenetv1.loadFromUri("/models");
       await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
       await faceapi.nets.faceExpressionNet.loadFromUri("/models");
     };
 
-    // Hàm lấy video stream
     const getVideoStream = async () => {
       return await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false,
       });
-    };
-
-    // Gửi frame video đến Flask server
-    const sendFrameToServer = async (frame) => {
-      try {
-        const formData = new FormData();
-        formData.append("file", frame);
-
-        const response = await fetch("http://127.0.0.1:5000/predict_frame", {
-          method: "POST",
-          body: formData,
-        });
-
-        const data = await response.json();
-        if (data.prediction) {
-          emotion.value = data.prediction;
-        }
-      } catch (error) {
-        console.error("Error sending frame to server:", error);
-      }
     };
 
     onMounted(async () => {
@@ -72,22 +59,14 @@ export default {
       };
 
       const start = async () => {
-        if (!videoRef.value || !canvasRef.value) return;
-
-        // Lấy stream video
         const stream = await getVideoStream();
         videoRef.value.srcObject = stream;
 
-        // Load các model cần thiết
         await loadModels();
-
         videoRef.value.pause();
         videoRef.value.play();
 
         videoRef.value.addEventListener("playing", () => {
-          if (!videoRef.value || !canvasRef.value) return;
-
-          // Đồng bộ kích thước video và canvas
           displaySize.width = videoRef.value.videoWidth;
           displaySize.height = videoRef.value.videoHeight;
 
@@ -99,45 +78,41 @@ export default {
 
         isLoaded.value = true;
         loading.value = false;
+
+        readyDialog.value = true;
+        setTimeout(() => {
+          readyDialog.value = false;
+        }, 3000);
       };
 
       const loop = async () => {
-        if (!videoRef.value || !canvasRef.value || !isLoaded.value) {
-          return;
-        }
+        if (!videoRef.value || !canvasRef.value || !isLoaded.value) return;
 
-        if (displaySize.width === 0 || displaySize.height === 0) return;
-
-        // Phát hiện khuôn mặt
         const detections = await faceapi
           .detectAllFaces(videoRef.value, new faceapi.SsdMobilenetv1Options())
           .withFaceLandmarks()
           .withFaceExpressions();
 
-        // Điều chỉnh kết quả phát hiện theo kích thước video
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        const resized = faceapi.resizeResults(detections, {
+          width: videoRef.value.videoWidth,
+          height: videoRef.value.videoHeight,
+        });
 
-        // Làm sạch canvas trước khi vẽ
-        const context = canvasRef.value.getContext("2d");
-        context.clearRect(0, 0, displaySize.width, displaySize.height);
+        const ctx = canvasRef.value.getContext("2d");
+        ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
+        faceapi.draw.drawDetections(canvasRef.value, resized);
+        faceapi.draw.drawFaceLandmarks(canvasRef.value, resized);
 
-        // Vẽ kết quả phát hiện lên canvas
-        faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
-        faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
-
-        // Cập nhật cảm xúc nếu phát hiện khuôn mặt
         if (detections.length > 0) {
           const expressions = detections[0].expressions;
-          const sorted = Object.entries(expressions).sort((a, b) => b[1] - a[1]);
-          emotion.value = sorted[0][0]; // Cảm xúc có xác suất cao nhất
+          const top = Object.entries(expressions).sort((a, b) => b[1] - a[1]);
+          emotion.value = top[0][0];
         }
       };
 
-      start();
-
+      await start();
       const interval = setInterval(loop, 100);
 
-      // Cleanup interval khi component bị hủy
       onUnmounted(() => {
         clearInterval(interval);
       });
@@ -148,6 +123,7 @@ export default {
       canvasRef,
       loading,
       emotion,
+      readyDialog,
     };
   },
 };
@@ -157,64 +133,89 @@ export default {
 .container {
   position: relative;
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #121212;
+  font-family: sans-serif;
 }
 
 .main {
-  position: relative;
+  display: flex;
   width: 100%;
-  height: auto;
+  height: 100%;
+}
+
+.left-panel, .right-panel {
+  width: 50%;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
 }
 
 video {
   width: 100%;
   height: auto;
-  display: block;
   border-radius: 10px;
+  display: block;
 }
 
 canvas {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 20px;
+  left: 20px;
+  width: calc(100% - 40px);
+  height: auto;
   pointer-events: none;
   border-radius: 10px;
 }
 
-.loading {
-  font-size: 18px;
+.right-panel {
   color: #fff;
-  text-align: center;
-  margin-top: 10px;
-  font-weight: bold;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 10px;
-  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background-color: #1e1e1e;
+  border-left: 2px solid #333;
 }
 
-.results {
-  margin-top: 20px;
-  text-align: center;
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 10px;
-}
-
-.results h3 {
-  font-size: 24px;
+.right-panel h3 {
+  font-size: 28px;
   margin-bottom: 10px;
   font-weight: bold;
-  text-transform: uppercase;
 }
 
 .emotion-result {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 24px;
   color: #ffeb3b;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+}
+
+/* Modal Styles */
+.modal {
+  position: absolute;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #222;
+  color: #fff;
+  padding: 25px 40px;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.modal.ready .modal-content.success {
+  background-color: #2e7d32;
+  color: #fff;
 }
 </style>

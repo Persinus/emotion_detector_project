@@ -10,10 +10,9 @@ import base64
 app = Flask(__name__)
 
 CORS(app, resources={
-    r"/predict": {"origins": ["https://emotion-detector-project-chaos.vercel.app"]},
-    r"/predict_frame": {"origins": ["https://emotion-detector-project-chaos.vercel.app"]}
+    r"/predict": {"origins": "*"},
+    r"/predict_frame": {"origins": "*"}
 }, supports_credentials=True, allow_headers=["Content-Type"])
-
 
 # Load the emotion detection model
 model = load_model('emotion_detection_model.h5')
