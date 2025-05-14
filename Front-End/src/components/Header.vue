@@ -18,7 +18,7 @@
             <router-link to="/CheckWebCam" class="nav-link">CheckWebCam</router-link>
           </el-menu-item>
           <el-menu-item index="3">
-            <router-link to="/vanBan" class="nav-link">CheckText</router-link>
+            <router-link to="/Audio" class="nav-link">CheckAudio</router-link>
           </el-menu-item>
         </el-menu>
       </nav>
@@ -62,6 +62,7 @@
     height: 40px; /* Giảm chiều cao logo */
     margin-right: 1em;
     transition: transform 300ms;
+    box-shadow: 0 2px 8px rgba(66,184,131,0.10);
   }
   
   .logo:hover {
@@ -86,27 +87,69 @@
   .el-menu {
     background-color: transparent; /* Làm menu trong suốt */
     border: none; /* Loại bỏ đường viền mặc định */
-
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+    width: 100%;
+    justify-content: flex-start;
   }
   
   .nav-link {
     color: inherit; /* Sử dụng màu chữ mặc định */
-
     text-decoration: none;
     font-size: 1rem; /* Giảm kích thước chữ */
     padding: 0.5em 1em; /* Thêm khoảng cách xung quanh chữ */
     transition: color 300ms; /* Thêm hiệu ứng chuyển màu khi hover */
-
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s;
   }
   
   .nav-link:hover {
     color: #ffffffcc; /* Màu trắng nhạt khi hover */
     text-decoration: underline; /* Gạch chân khi hover */
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 2px 8px rgba(66,184,131,0.10);
+  }
+  
+  .el-menu-item:hover {
+    background: rgba(255,255,255,0.08);
+    color: #d3ffdb !important;
+    box-shadow: 0 2px 8px rgba(66,184,131,0.10);
+  }
+  
+  .el-menu-item:active,
+  .nav-link:active {
+    background: rgba(66,184,131,0.25);
+    color: #fff !important;
   }
   
   /* Đảm bảo header luôn liền mạch với nội dung */
   body {
     margin: 0;
     padding: 0;
+  }
+  
+  /* Responsive: co lại trên màn hình nhỏ */
+  @media (max-width: 700px) {
+    .header {
+      flex-direction: column;
+      height: auto;
+      padding: 0.5em 0.2em;
+      align-items: flex-start;
+    }
+    .logo-container {
+      margin-bottom: 0.5em;
+      justify-content: center;
+      width: 100%;
+    }
+    .site-title {
+      font-size: 1rem;
+    }
+    .nav {
+      width: 100%;
+      justify-content: flex-start;
+      margin-right: 0;
+    }
+    .el-menu {
+      width: 100%;
+      justify-content: flex-start;
+    }
   }
   </style>
