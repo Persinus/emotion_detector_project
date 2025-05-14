@@ -12,6 +12,9 @@
     "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.9.0",
     "face-api.js": "^0.22.2",
+    "lamejs": "^1.2.1",
+    "mic-recorder-to-mp3": "^2.2.2",
+    "recorder-js": "^1.0.7",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"
   },
