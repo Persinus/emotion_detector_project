@@ -160,7 +160,7 @@ export default {
         const formData = new FormData();
         formData.append("file", this.croppedFaceBlob, "cropped_face.jpg");
 
-        const response = await axios.post("http://127.0.0.1:5000/predict", formData, {
+        const response = await axios.post("http://127.0.0.1:5000//predict_image", formData, {
         
         });
 
@@ -184,27 +184,39 @@ export default {
 <style scoped>
 /* Overall app styling */
 .app-container {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+ 
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(120deg, #e0f7fa 60%, #f9f9f9 100%);
 }
 
 h1 {
-  color: #333;
-  margin-bottom: 20px;
+  color: #007bff;
+  margin-bottom: 24px;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0,123,255,0.08);
 }
 
 /* Two-column layout */
 .content-container {
   display: flex;
-  gap: 20px;
+  gap: 32px;
   width: 100%;
+  min-width: 1200px;
+  height: 80vh; /* Chiếm 80% chiều cao màn hình */
+  min-height: 400px;
+  align-items: stretch;
+  background: rgba(255,255,255,0.7);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,123,255,0.08);
+  padding: 32px 24px;
+  transition: box-shadow 0.3s;
 }
 
 .left-panel,
@@ -213,41 +225,89 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  padding: 24px 18px;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0, 123, 255, 0.06);
+  height: 100%;
+  justify-content: flex-start;
+  transition: box-shadow 0.3s, transform 0.2s;
 }
 
-/* Image preview styling */
+.left-panel:hover,
+.right-panel:hover {
+  box-shadow: 0 6px 24px rgba(0,123,255,0.13);
+  transform: translateY(-2px) scale(1.01);
+}
+
+h3 {
+  color: #0097a7;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
 .image-preview {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   width: 100%;
   text-align: center;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 320px; /* Đặt chiều cao tối thiểu cho vùng ảnh/canvas */
+  max-height: 48vh;
 }
 
 .image-preview img,
 canvas {
   max-width: 100%;
-  border-radius: 8px;
-  border: 2px solid #ddd;
+  max-height: 300px; /* Đặt chiều cao tối đa cho ảnh/canvas */
+  min-height: 220px; /* Đặt chiều cao tối thiểu cho ảnh/canvas */
+  border-radius: 10px;
+  border: 2px solid #b2ebf2;
+  object-fit: contain;
+  box-shadow: 0 2px 12px rgba(0,123,255,0.07);
+  background: #f5fafd;
+  animation: fadeIn 0.7s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .no-image {
   color: #ff6b6b;
   font-size: 16px;
   font-style: italic;
+  margin-top: 20px;
 }
 
-/* Predict button */
+.file-input {
+  margin-bottom: 14px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #b2ebf2;
+  background: #fafdff;
+  transition: border 0.3s;
+}
+.file-input:focus {
+  border: 2px solid #007bff;
+}
+
 .predict-button {
-  padding: 10px 20px;
-  background-color: #007bff;
+  padding: 12px 28px;
+  background: linear-gradient(90deg, #007bff 60%, #00bcd4 100%);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.08);
 }
 
 .predict-button:disabled {
@@ -255,11 +315,75 @@ canvas {
   cursor: not-allowed;
 }
 
-/* Loading indicator */
+.predict-button:hover:not(:disabled) {
+  background: linear-gradient(90deg, #0056b3 60%, #0097a7 100%);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 16px rgba(0,123,255,0.13);
+}
+
 .loading-indicator {
   margin-top: 10px;
   color: #007bff;
-  font-size: 14px;
+  font-size: 15px;
   font-style: italic;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.results {
+  width: 100%;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.prediction-result {
+  font-size: 1.2rem;
+  color: #007bff;
+  font-weight: bold;
+  margin-top: 1rem;
+  animation: fadeIn 1s;
+}
+
+.error-message {
+  color: #e53935;
+  font-weight: bold;
+  margin-top: 1rem;
+  animation: shake 0.4s;
+}
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px);}
+  20%, 80% { transform: translateX(4px);}
+  30%, 50%, 70% { transform: translateX(-8px);}
+  40%, 60% { transform: translateX(8px);}
+}
+
+/* Responsive cho mobile */
+@media (max-width: 1100px) {
+  .content-container {
+    max-width: 98vw;
+    padding: 18px 2vw;
+    gap: 12px;
+  }
+}
+@media (max-width: 900px) {
+  .content-container {
+    flex-direction: column;
+    height: auto;
+    min-height: unset;
+    padding: 12px 2vw;
+  }
+  .left-panel,
+  .right-panel {
+    height: auto;
+    margin-bottom: 10px;
+  }
+  .image-preview img,
+  canvas {
+    max-height: 32vh;
+  }
 }
 </style>
