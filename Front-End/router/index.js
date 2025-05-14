@@ -19,9 +19,9 @@ const routes = [
   },
   //
   {
-    path: '/vanban',
-    name: 'VanBan',
-    component: () => import('../src/views/VanBan.vue'),
+    path: '/Audio',
+    name: 'Audio',
+    component: () => import('../src/views/Audio.vue'),
   }
   
 ]
