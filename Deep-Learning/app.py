@@ -17,14 +17,14 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 model_image = load_model('emotion_detection_model.h5')
 
 # Load emotion detection model for audio
-MODEL_PATH = "emotion_audio_model.keras"
+MODEL_PATH = "final_model_40epochs.keras"
 model_audio = tf.keras.models.load_model(MODEL_PATH)
 
 # Emotion labels for image model (from FER-2013 dataset)
 emotion_labels_image = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 # Emotion labels for audio model
-emotion_labels_audio = ['Angry', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+emotion_labels_audio = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 # Các tham số xử lý âm thanh
 AUDIO_SAMPLE_RATE = 22050
